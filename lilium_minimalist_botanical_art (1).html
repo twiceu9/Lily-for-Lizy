@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en" data-mood="midnight">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Lilium — Botanical Study</title>
+
+  <!-- Tailwind CSS for responsive layout utilities -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Refined Serif & Clean Sans-Serif Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================================
+       1. THEME, LIGHTING MOOD & FLOWER COLOR VARIABLES
+       ========================================================================== */
+    :root {
+      /* Atmospheric Mood Defaults (Midnight) */
+      --bg-core: #0d201a;
+      --bg-mid: #081310;
+      --bg-edge: #030706;
+      --glow-mood: rgba(164, 218, 192, 0.14);
+      --glow-flower: rgba(246, 240, 224, 0.18);
+      --text-primary: rgba(244, 246, 242, 0.93);
+      --text-muted: rgba(205, 219, 211, 0.56);
+      --pill-bg: rgba(10, 20, 17, 0.62);
+      --pill-border: rgba(220, 240, 230, 0.13);
+      --pill-active-bg: rgba(235, 248, 240, 0.15);
+      --pill-active-text: #f5faf7;
+      --flower-filter: drop-shadow(0 26px 46px rgba(0, 0, 0, 0.64)) brightness(1) contrast(1.02);
+
+      /* Dynamic Botanical Petal Colors (updated smoothly by JS) */
+      --petal-vein: rgba(182, 152, 162, 0.18);
+      --petal-freckle: #c75e77;
+      --petal-blush: rgba(232, 148, 168, 0.14);
+      --petal-stroke: rgba(255, 255, 255, 0.62);
+      --petal-tip-shade: rgba(196, 208, 204, 0.32);
+    }
+
+    /* Mood: Dawn Mist */
+    html[data-mood="dawn"] {
+      --bg-core: #35293b;
+      --bg-mid: #1f1926;
+      --bg-edge: #100c14;
+      --glow-mood: rgba(240, 194, 216, 0.16);
+      --text-primary: rgba(252, 244, 247, 0.94);
+      --text-muted: rgba(230, 210, 222, 0.6);
+      --pill-bg: rgba(30, 23, 36, 0.62);
+      --pill-border: rgba(248, 224, 236, 0.16);
+      --pill-active-bg: rgba(255, 232, 242, 0.17);
+      --pill-active-text: #fff5f9;
+      --flower-filter: drop-shadow(0 26px 46px rgba(14, 7, 20, 0.56)) brightness(1.03) saturate(1.04);
+    }
+
+    /* Mood: Golden Hour */
+    html[data-mood="golden"] {
+      --bg-core: #3d2816;
+      --bg-mid: #21150c;
+      --bg-edge: #0f0905;
+      --glow-mood: rgba(255, 198, 118, 0.18);
+      --text-primary: rgba(255, 246, 232, 0.94);
+      --text-muted: rgba(236, 214, 184, 0.6);
+      --pill-bg: rgba(34, 22, 12, 0.64);
+      --pill-border: rgba(255, 224, 178, 0.17);
+      --pill-active-bg: rgba(255, 224, 172, 0.18);
+      --pill-active-text: #fff8eb;
+      --flower-filter: drop-shadow(0 26px 46px rgba(18, 9, 2, 0.66)) sepia(0.08) saturate(1.08) brightness(1.04);
+    }
+
+    /* ==========================================================================
+       2. BASE LAYOUT & ATMOSPHERE
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-edge);
+      color: var(--text-primary);
+      user-select: none;
+    }
+
+    .font-serif-botanical {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+    }
+
+    /* Atmospheric Radial Vignette Background */
+    .atmosphere-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 50% 42%, var(--bg-core) 0%, var(--bg-mid) 48%, var(--bg-edge) 100%);
+      transition: background 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Subtle organic fine-art grain */
+    .atmosphere-grain {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      opacity: 0.032;
+      pointer-events: none;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.85) 0.5px, transparent 0.5px);
+      background-size: 24px 24px;
+    }
+
+    /* Soft Luminous Halo behind the Lily Arrangement */
+    .ambient-halo {
+      position: fixed;
+      top: 44%;
+      left: 50%;
+      width: min(90vw, 660px);
+      height: min(82vw, 600px);
+      transform: translate(-50%, -50%);
+      border-radius: 9999px;
+      background: radial-gradient(
+        circle at center,
+        var(--glow-flower) 0%,
+        var(--glow-mood) 42%,
+        transparent 72%
+      );
+      filter: blur(34px);
+      z-index: 2;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+      animation: haloBreath 7.5s ease-in-out infinite;
+    }
+
+    .ambient-halo.pulse-burst {
+      animation: haloPulseOnce 1.15s cubic-bezier(0.22, 1, 0.36, 1), haloBreath 7.5s ease-in-out 1.15s infinite;
+    }
+
+    /* Canvas for drifting firefly & pollen motes */
+    #pollenCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    /* ==========================================================================
+       3. CENTERED 3-LILY BOUQUET STAGE & 3D PARALLAX
+       ========================================================================== */
+    .bouquet-stage {
+      position: relative;
+      z-index: 4;
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 2.2rem;
+      padding-bottom: 5.5rem;
+      perspective: 1200px;
+      pointer-events: none;
+    }
+
+    .bouquet-parallax-wrap {
+      position: relative;
+      width: min(98vw, 760px);
+      height: min(80dvh, 690px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-style: preserve-3d;
+      will-change: transform;
+      pointer-events: none;
+    }
+
+    #bouquetSvg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      filter: var(--flower-filter);
+      transition: filter 1.1s ease;
+    }
+
+    /* Individual Interactive Lily Hit Areas */
+    .lily-interactive {
+      pointer-events: auto;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* Gentle Independent Breeze Sway per Lily */
+    .sway-center {
+      transform-origin: 400px 720px;
+      animation: gentleBreezeCenter 8.6s ease-in-out infinite;
+    }
+
+    .sway-left {
+      transform-origin: 365px 720px;
+      animation: gentleBreezeLeft 9.4s ease-in-out -2.2s infinite;
+    }
+
+    .sway-right {
+      transform-origin: 435px 720px;
+      animation: gentleBreezeRight 9.1s ease-in-out -4.5s infinite;
+    }
+
+    /* ==========================================================================
+       4. STAGGERED BOTANICAL BLOOMING & BREATHING ANIMATIONS
+       ========================================================================== */
+    /* Stems & Foliage */
+    .stem-unit {
+      transform-origin: 400px 735px;
+      transform: translateY(42px) scaleY(0.88);
+      opacity: 0;
+      transition: transform 1.6s cubic-bezier(0.22, 1, 0.36, 1), opacity 1.2s ease;
+    }
+
+    .leaf-unit {
+      transform: scale(0.45);
+      opacity: 0;
+      transition: transform 1.75s cubic-bezier(0.22, 1, 0.36, 1) 0.25s, opacity 1.15s ease 0.25s;
+    }
+
+    /* Flower Head Bud State */
+    .lily-head {
+      transform-origin: 0px 0px;
+      transform: translateY(24px) scale(0.72);
+      opacity: 0;
+      transition: transform 1.75s cubic-bezier(0.22, 1, 0.36, 1), opacity 1.15s ease;
+    }
+
+    /* Individual Lily Staggered Delays */
+    .lily-unit[data-lily="center"] .lily-head { transition-delay: 0.14s; }
+    .lily-unit[data-lily="right"]  .lily-head { transition-delay: 0.38s; }
+    .lily-unit[data-lily="left"]   .lily-head { transition-delay: 0.56s; }
+
+    /* Petals Start Folded Inward Like a Bud */
+    .petal {
+      transform-origin: 0px 0px;
+      opacity: 0.18;
+      transition:
+        transform 2.0s cubic-bezier(0.19, 1, 0.22, 1),
+        opacity 1.2s ease;
+    }
+
+    .petal-outer-1 { transform: scale(0.32, 0.62) rotate(-22deg); }
+    .petal-outer-2 { transform: scale(0.32, 0.62) rotate(22deg); }
+    .petal-outer-3 { transform: scale(0.32, 0.62) rotate(-18deg); }
+    .petal-inner-1 { transform: scale(0.26, 0.54) rotate(18deg); }
+    .petal-inner-2 { transform: scale(0.26, 0.54) rotate(-20deg); }
+    .petal-inner-3 { transform: scale(0.26, 0.54) rotate(16deg); }
+
+    /* Staggered petal delays per lily */
+    .lily-unit[data-lily="center"] .petal-outer-1 { transition-delay: 0.24s; }
+    .lily-unit[data-lily="center"] .petal-outer-2 { transition-delay: 0.32s; }
+    .lily-unit[data-lily="center"] .petal-outer-3 { transition-delay: 0.40s; }
+    .lily-unit[data-lily="center"] .petal-inner-1 { transition-delay: 0.52s; }
+    .lily-unit[data-lily="center"] .petal-inner-2 { transition-delay: 0.60s; }
+    .lily-unit[data-lily="center"] .petal-inner-3 { transition-delay: 0.68s; }
+
+    .lily-unit[data-lily="right"] .petal-outer-1 { transition-delay: 0.48s; }
+    .lily-unit[data-lily="right"] .petal-outer-2 { transition-delay: 0.56s; }
+    .lily-unit[data-lily="right"] .petal-outer-3 { transition-delay: 0.64s; }
+    .lily-unit[data-lily="right"] .petal-inner-1 { transition-delay: 0.76s; }
+    .lily-unit[data-lily="right"] .petal-inner-2 { transition-delay: 0.84s; }
+    .lily-unit[data-lily="right"] .petal-inner-3 { transition-delay: 0.92s; }
+
+    .lily-unit[data-lily="left"] .petal-outer-1 { transition-delay: 0.66s; }
+    .lily-unit[data-lily="left"] .petal-outer-2 { transition-delay: 0.74s; }
+    .lily-unit[data-lily="left"] .petal-outer-3 { transition-delay: 0.82s; }
+    .lily-unit[data-lily="left"] .petal-inner-1 { transition-delay: 0.94s; }
+    .lily-unit[data-lily="left"] .petal-inner-2 { transition-delay: 1.02s; }
+    .lily-unit[data-lily="left"] .petal-inner-3 { transition-delay: 1.10s; }
+
+    /* Throat Glow, Stamens & Pistil Emerge Last */
+    .throat-glow {
+      transform-origin: 0px 0px;
+      transform: scale(0.2);
+      opacity: 0;
+      transition: transform 1.65s cubic-bezier(0.22, 1, 0.36, 1), opacity 1.35s ease;
+    }
+
+    .stamens-group {
+      transform-origin: 0px 0px;
+      transform: scale(0.3) rotate(-10deg);
+      opacity: 0;
+      transition: transform 1.8s cubic-bezier(0.19, 1, 0.22, 1), opacity 1.25s ease;
+    }
+
+    .pistil-group {
+      transform-origin: 0px 0px;
+      transform: scale(0.32);
+      opacity: 0;
+      transition: transform 1.75s cubic-bezier(0.19, 1, 0.22, 1), opacity 1.25s ease;
+    }
+
+    .lily-unit[data-lily="center"] .throat-glow   { transition-delay: 0.72s; }
+    .lily-unit[data-lily="center"] .stamens-group { transition-delay: 0.82s; }
+    .lily-unit[data-lily="center"] .pistil-group  { transition-delay: 0.90s; }
+
+    .lily-unit[data-lily="right"] .throat-glow    { transition-delay: 0.96s; }
+    .lily-unit[data-lily="right"] .stamens-group  { transition-delay: 1.06s; }
+    .lily-unit[data-lily="right"] .pistil-group   { transition-delay: 1.14s; }
+
+    .lily-unit[data-lily="left"] .throat-glow     { transition-delay: 1.14s; }
+    .lily-unit[data-lily="left"] .stamens-group   { transition-delay: 1.24s; }
+    .lily-unit[data-lily="left"] .pistil-group    { transition-delay: 1.32s; }
+
+    /* BLOOMED STATE */
+    .bloomed .stem-unit {
+      transform: translateY(0) scaleY(1);
+      opacity: 1;
+    }
+
+    .bloomed .leaf-unit {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .bloomed .lily-head {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .bloomed .petal {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+
+    .bloomed .throat-glow {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .bloomed .stamens-group {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+
+    .bloomed .pistil-group {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    /* Continuous Organic Breathing Once Bloomed */
+    .bloomed .petal-breathe-outer {
+      transform-origin: 0px 0px;
+      animation: petalBreatheOuter 6.8s ease-in-out 2.3s infinite;
+    }
+
+    .bloomed .petal-breathe-inner {
+      transform-origin: 0px 0px;
+      animation: petalBreatheInner 6.8s ease-in-out 2.7s infinite;
+    }
+
+    .bloomed .stamen-tremor {
+      transform-origin: 0px 0px;
+      animation: stamenTremor 5.4s ease-in-out 2.5s infinite;
+    }
+
+    /* Interactive Click/Tap Ripple */
+    .petal-ripple {
+      animation: ripplePetal 1.12s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    }
+
+    .stamen-ripple {
+      animation: rippleStamen 1.18s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    }
+
+    @keyframes gentleBreezeCenter {
+      0%, 100% { transform: rotate(-0.95deg) translateY(0px); }
+      50%      { transform: rotate(1.15deg) translateY(-4px); }
+    }
+
+    @keyframes gentleBreezeLeft {
+      0%, 100% { transform: rotate(-1.35deg) translateY(1px); }
+      50%      { transform: rotate(0.95deg) translateY(-4px); }
+    }
+
+    @keyframes gentleBreezeRight {
+      0%, 100% { transform: rotate(1.25deg) translateY(0px); }
+      50%      { transform: rotate(-1.05deg) translateY(-5px); }
+    }
+
+    @keyframes haloBreath {
+      0%, 100% { transform: translate(-50%, -50%) scale(0.96); opacity: 0.86; }
+      50%      { transform: translate(-50%, -50%) scale(1.06); opacity: 1; }
+    }
+
+    @keyframes haloPulseOnce {
+      0%   { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+      34%  { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(0.98); opacity: 0.88; }
+    }
+
+    @keyframes petalBreatheOuter {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50%      { transform: scale(1.022) rotate(0.6deg); }
+    }
+
+    @keyframes petalBreatheInner {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50%      { transform: scale(1.028) rotate(-0.7deg); }
+    }
+
+    @keyframes stamenTremor {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      33%      { transform: rotate(1.2deg) scale(1.015); }
+      66%      { transform: rotate(-1deg) scale(0.99); }
+    }
+
+    @keyframes ripplePetal {
+      0%   { transform: scale(1) rotate(0deg); }
+      28%  { transform: scale(1.07) rotate(2deg); }
+      62%  { transform: scale(0.982) rotate(-1deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    @keyframes rippleStamen {
+      0%   { transform: scale(1) rotate(0deg); }
+      25%  { transform: scale(1.08) rotate(-3.2deg); }
+      55%  { transform: scale(0.97) rotate(2.2deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    /* ==========================================================================
+       5. MINIMAL FROSTED GLASS CONTROLS & SWATCHES
+       ========================================================================== */
+    .glass-dock {
+      background: var(--pill-bg);
+      border: 1px solid var(--pill-border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+      transition: background 0.8s ease, border-color 0.8s ease;
+    }
+
+    .mood-btn {
+      color: var(--text-muted);
+      transition: all 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .mood-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .mood-btn[aria-pressed="true"] {
+      background: var(--pill-active-bg);
+      color: var(--pill-active-text);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    /* Botanical Color Swatch Dots */
+    .color-swatch {
+      position: relative;
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      border: 1.5px solid rgba(255, 255, 255, 0.28);
+      cursor: pointer;
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .color-swatch:hover {
+      transform: scale(1.14);
+      border-color: rgba(255, 255, 255, 0.72);
+    }
+
+    .color-swatch[aria-pressed="true"] {
+      transform: scale(1.16);
+      border-color: #ffffff;
+      box-shadow: 0 0 0 2.5px rgba(255, 255, 255, 0.22), 0 0 14px var(--swatch-glow, rgba(255, 255, 255, 0.55));
+    }
+
+    /* Custom Color Picker Swatch */
+    .custom-swatch-label {
+      position: relative;
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      background: conic-gradient(from 0deg, #f8b4c4, #f9d982, #a8e6cf, #b9b5f6, #f07898, #f8b4c4);
+      border: 1.5px solid rgba(255, 255, 255, 0.38);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .custom-swatch-label:hover {
+      transform: scale(1.14);
+      border-color: rgba(255, 255, 255, 0.85);
+    }
+
+    .custom-swatch-label.is-active {
+      transform: scale(1.16);
+      border-color: #ffffff;
+      box-shadow: 0 0 0 2.5px rgba(255, 255, 255, 0.24), 0 0 14px rgba(255, 255, 255, 0.45);
+    }
+
+    .custom-swatch-inner {
+      width: 10px;
+      height: 10px;
+      border-radius: 9999px;
+      background: rgba(12, 20, 18, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      pointer-events: none;
+    }
+
+    .fade-in-slow {
+      opacity: 0;
+      transform: translateY(-6px);
+      animation: uiReveal 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.45s forwards;
+    }
+
+    .fade-in-bottom {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: uiRevealBottom 1.35s cubic-bezier(0.22, 1, 0.36, 1) 0.85s forwards;
+    }
+
+    @keyframes uiReveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes uiRevealBottom {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hint-fade {
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+
+    .hint-hidden {
+      opacity: 0 !important;
+      transform: translateY(4px);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Atmospheric Background & Vignette -->
+  <div class="atmosphere-bg" aria-hidden="true"></div>
+  <div class="atmosphere-grain" aria-hidden="true"></div>
+  <div id="ambientHalo" class="ambient-halo" aria-hidden="true"></div>
+
+  <!-- Drifting Pollen & Firefly Light Motes Canvas -->
+  <canvas id="pollenCanvas" aria-hidden="true"></canvas>
+
+  <!-- Discreet Botanical Title -->
+  <header class="fixed top-4 sm:top-7 inset-x-0 z-10 flex flex-col items-center pointer-events-none px-4 fade-in-slow">
+    <h1 class="font-serif-botanical text-2xl sm:text-3xl md:text-[2.2rem] font-light tracking-[0.24em] uppercase"
+        style="color: var(--text-primary); transition: color 0.8s ease;">
+      Lilium
+    </h1>
+    <p class="mt-0.5 text-[10px] sm:text-[11px] tracking-[0.3em] uppercase font-light flex items-center gap-2"
+       style="color: var(--text-muted); transition: color 0.8s ease;">
+      <span>Liliaceae</span>
+      <span aria-hidden="true">&middot;</span>
+      <span id="paletteSubtitle" class="transition-opacity duration-500">Casablanca</span>
+    </p>
+  </header>
+
+  <!-- Centered 3-Lily Bouquet Stage -->
+  <main class="bouquet-stage">
+    <div id="bouquetParallax" class="bouquet-parallax-wrap">
+
+      <!-- ====================================================================
+           GRACEFUL 3-LILY BOTANICAL ARRANGEMENT SVG
+           ViewBox: 0 0 800 740
+           Each flower blossom is authored around local origin (0, 0) so all 3
+           lilies share silky-smooth dynamic petal gradients while supporting
+           independent placement, scale, tilt, blooming, and tap ripples.
+           ==================================================================== -->
+      <svg id="bouquetSvg" viewBox="0 0 800 740" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Soft Petal Drop Shadow for 3D Overlap Depth -->
+          <filter id="petalShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#040d0a" flood-opacity="0.34" />
+          </filter>
+
+          <filter id="softGlowFilter" x="-45%" y="-45%" width="190%" height="190%">
+            <feGaussianBlur stdDeviation="13" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+
+          <filter id="antherGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="2.5" stdDeviation="3.5" flood-color="#4e1906" flood-opacity="0.46" />
+          </filter>
+
+          <!-- Stem & Foliage Gradients (Fading Softly into Lower Frame) -->
+          <linearGradient id="stemGradCenter" x1="400" y1="265" x2="400" y2="735" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#3c6247" />
+            <stop offset="32%" stop-color="#284933" />
+            <stop offset="70%" stop-color="#16301f" />
+            <stop offset="90%" stop-color="#0c1d13" stop-opacity="0.62" />
+            <stop offset="100%" stop-color="#06100a" stop-opacity="0" />
+          </linearGradient>
+
+          <linearGradient id="stemGradSide" x1="400" y1="320" x2="400" y2="735" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#35583f" />
+            <stop offset="36%" stop-color="#23412d" />
+            <stop offset="74%" stop-color="#142b1c" />
+            <stop offset="92%" stop-color="#0a1a10" stop-opacity="0.52" />
+            <stop offset="100%" stop-color="#050e09" stop-opacity="0" />
+          </linearGradient>
+
+          <linearGradient id="stemHighlight" x1="400" y1="270" x2="400" y2="710" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#8cb88a" stop-opacity="0.5" />
+            <stop offset="58%" stop-color="#4f7a54" stop-opacity="0.22" />
+            <stop offset="100%" stop-color="#1a3322" stop-opacity="0" />
+          </linearGradient>
+
+          <linearGradient id="leafGradLeft" x1="100%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stop-color="#193523" />
+            <stop offset="48%" stop-color="#2b5237" />
+            <stop offset="85%" stop-color="#3f6e49" />
+            <stop offset="100%" stop-color="#55845a" stop-opacity="0.86" />
+          </linearGradient>
+
+          <linearGradient id="leafGradRight" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#183221" />
+            <stop offset="48%" stop-color="#294f35" />
+            <stop offset="85%" stop-color="#3e6c48" />
+            <stop offset="100%" stop-color="#56855b" stop-opacity="0.86" />
+          </linearGradient>
+
+          <linearGradient id="leafGradFade" x1="0%" y1="50%" x2="100%" y2="50%">
+            <stop offset="0%" stop-color="#142a1c" stop-opacity="0.65" />
+            <stop offset="65%" stop-color="#24472f" stop-opacity="0.5" />
+            <stop offset="100%" stop-color="#325e3d" stop-opacity="0.1" />
+          </linearGradient>
+
+          <!-- ================================================================
+               DYNAMICALLY ANIMATED PETAL GRADIENTS (Interpolated smoothly in JS)
+               ================================================================ -->
+          <!-- Outer Sepal Petal Gradient -->
+          <radialGradient id="outerPetalGrad" cx="50%" cy="90%" r="94%" fx="50%" fy="94%">
+            <stop id="outerStop0" offset="0%" stop-color="#c9de96" />
+            <stop id="outerStop1" offset="15%" stop-color="#e5edd1" />
+            <stop id="outerStop2" offset="32%" stop-color="#f7e9ec" />
+            <stop id="outerStop3" offset="58%" stop-color="#f5f3f0" />
+            <stop id="outerStop4" offset="84%" stop-color="#e8ece9" />
+            <stop id="outerStop5" offset="100%" stop-color="#d5ddd9" />
+          </radialGradient>
+
+          <!-- Inner Broad Petal Gradient -->
+          <radialGradient id="innerPetalGrad" cx="50%" cy="91%" r="95%" fx="50%" fy="95%">
+            <stop id="innerStop0" offset="0%" stop-color="#d6ea9b" />
+            <stop id="innerStop1" offset="14%" stop-color="#f1f5d7" />
+            <stop id="innerStop2" offset="30%" stop-color="#fae6ea" />
+            <stop id="innerStop3" offset="54%" stop-color="#ffffff" />
+            <stop id="innerStop4" offset="85%" stop-color="#f7f7f5" />
+            <stop id="innerStop5" offset="100%" stop-color="#e9eeec" />
+          </radialGradient>
+
+          <!-- Central Midrib Highlight (local petal coords: 0,0 -> 0,-230) -->
+          <linearGradient id="petalMidrib" x1="0" y1="0" x2="0" y2="-230" gradientUnits="userSpaceOnUse">
+            <stop id="midribStop0" offset="0%" stop-color="#b8d977" stop-opacity="0.88" />
+            <stop id="midribStop1" offset="28%" stop-color="#f0c8d0" stop-opacity="0.45" />
+            <stop id="midribStop2" offset="72%" stop-color="#ffffff" stop-opacity="0.62" />
+            <stop id="midribStop3" offset="100%" stop-color="#ffffff" stop-opacity="0.06" />
+          </linearGradient>
+
+          <!-- Luminous Pale-Green Nectary Throat Glow -->
+          <radialGradient id="throatRadial" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fff9cf" stop-opacity="0.96" />
+            <stop offset="32%" stop-color="#d7f099" stop-opacity="0.72" />
+            <stop offset="68%" stop-color="#a8cf7a" stop-opacity="0.22" />
+            <stop offset="100%" stop-color="#a8cf7a" stop-opacity="0" />
+          </radialGradient>
+
+          <!-- Filament Gradient -->
+          <linearGradient id="filamentGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stop-color="#a8cc78" />
+            <stop offset="55%" stop-color="#ebf3d8" />
+            <stop offset="100%" stop-color="#fff7e2" />
+          </linearGradient>
+
+          <!-- Warm Amber / Rusty-Orange Pollen-Dusted Anther Gradient -->
+          <linearGradient id="antherGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f9b950" />
+            <stop offset="38%" stop-color="#db6d27" />
+            <stop offset="78%" stop-color="#9e3a14" />
+            <stop offset="100%" stop-color="#692008" />
+          </linearGradient>
+
+          <!-- Pistil & Stigma Gradients -->
+          <linearGradient id="pistilGrad" x1="0" y1="0" x2="14" y2="-92" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#99c46c" />
+            <stop offset="65%" stop-color="#d7eba8" />
+            <stop offset="100%" stop-color="#f4f8d8" />
+          </linearGradient>
+
+          <radialGradient id="stigmaGrad" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#fffce0" />
+            <stop offset="55%" stop-color="#cfe391" />
+            <stop offset="100%" stop-color="#87ad58" />
+          </radialGradient>
+
+          <!-- ================================================================
+               REUSABLE BOTANICAL LILY PARTS (Centered at Local Origin 0, 0)
+               ================================================================ -->
+          <!-- Outer Reflexed Sepal -->
+          <g id="outerPetalShape">
+            <path d="M 0 3
+                     C -18 -38, -48 -96, -42 -152
+                     C -37 -194, -13 -222, 0 -239
+                     C 13 -222, 37 -194, 42 -152
+                     C 48 -96, 18 -38, 0 3 Z"
+                  fill="url(#outerPetalGrad)"
+                  stroke="var(--petal-stroke)"
+                  stroke-width="0.7" />
+            <!-- Reflexed Tip Shading -->
+            <path d="M -23 -201 C -11 -216, -4 -227, 0 -237 C 4 -227, 11 -216, 23 -201 C 11 -210, 5 -213, 0 -215 C -5 -213, -11 -210, -23 -201 Z"
+                  fill="var(--petal-tip-shade)" />
+            <!-- Central Midrib -->
+            <path d="M 0 -3 C 0 -58, -1 -134, 0 -226"
+                  stroke="url(#petalMidrib)" stroke-width="2.1" stroke-linecap="round" />
+            <!-- Delicate Botanical Veining -->
+            <g stroke="var(--petal-vein)" stroke-width="0.75" fill="none">
+              <path d="M -3 -24 C -15 -72, -28 -122, -25 -178" />
+              <path d="M 3 -24 C 15 -72, 28 -122, 25 -178" />
+              <path d="M -5 -36 C -23 -76, -37 -120, -34 -161" />
+              <path d="M 5 -36 C 23 -76, 37 -120, 34 -161" />
+              <path d="M -2 -53 C -10 -96, -14 -144, -11 -199" />
+              <path d="M 2 -53 C 10 -96, 14 -144, 11 -199" />
+            </g>
+            <!-- Soft Throat Freckles -->
+            <g fill="var(--petal-freckle)" opacity="0.54">
+              <ellipse cx="-6" cy="-54" rx="1.25" ry="2.1" transform="rotate(-12 -6 -54)" />
+              <ellipse cx="7" cy="-60" rx="1.2" ry="1.95" transform="rotate(14 7 -60)" />
+              <ellipse cx="-11" cy="-73" rx="1.35" ry="2.0" transform="rotate(-16 -11 -73)" />
+              <ellipse cx="11" cy="-77" rx="1.25" ry="2.0" transform="rotate(15 11 -77)" />
+              <circle cx="-4" cy="-87" r="1.05" />
+              <circle cx="4" cy="-83" r="0.95" />
+              <ellipse cx="-15" cy="-93" rx="1.05" ry="1.75" transform="rotate(-18 -15 -93)" />
+              <ellipse cx="15" cy="-96" rx="1.05" ry="1.65" transform="rotate(18 15 -96)" />
+              <circle cx="-8" cy="-104" r="0.88" opacity="0.7" />
+              <circle cx="8" cy="-107" r="0.92" opacity="0.7" />
+            </g>
+          </g>
+
+          <!-- Inner Broad Undulating Petal -->
+          <g id="innerPetalShape">
+            <path d="M 0 3
+                     C -23 -37, -61 -93, -53 -152
+                     C -47 -196, -18 -220, 0 -235
+                     C 18 -220, 47 -196, 53 -152
+                     C 61 -93, 23 -37, 0 3 Z"
+                  fill="url(#innerPetalGrad)"
+                  stroke="var(--petal-stroke)"
+                  stroke-width="0.9" />
+            <!-- Soft Luminous Ruffled Edge Sheen -->
+            <path d="M -49 -146 C -43 -184, -19 -212, 0 -229 C 19 -212, 43 -184, 49 -146"
+                  stroke="rgba(255,255,255,0.48)" stroke-width="1.35" fill="none" />
+            <!-- Central Keel Ridge -->
+            <path d="M 0 -3 C 0 -60, 0 -138, 0 -222"
+                  stroke="url(#petalMidrib)" stroke-width="2.5" stroke-linecap="round" />
+            <!-- Fine Botanical Veining -->
+            <g stroke="var(--petal-vein)" stroke-width="0.75" fill="none">
+              <path d="M -3 -20 C -19 -70, -38 -120, -32 -180" />
+              <path d="M 3 -20 C 19 -70, 38 -120, 32 -180" />
+              <path d="M -6 -34 C -30 -74, -47 -118, -42 -159" />
+              <path d="M 6 -34 C 30 -74, 47 -118, 42 -159" />
+              <path d="M -2 -44 C -11 -90, -17 -141, -13 -200" />
+              <path d="M 2 -44 C 11 -90, 17 -141, 13 -200" />
+            </g>
+            <!-- Soft Throat Blush Wash -->
+            <ellipse cx="0" cy="-66" rx="18" ry="37" fill="var(--petal-blush)" />
+            <!-- Throat Papillae & Freckles -->
+            <g fill="var(--petal-freckle)" opacity="0.65">
+              <ellipse cx="-8" cy="-49" rx="1.35" ry="2.3" transform="rotate(-14 -8 -49)" />
+              <ellipse cx="8" cy="-53" rx="1.35" ry="2.2" transform="rotate(14 8 -53)" />
+              <ellipse cx="-14" cy="-66" rx="1.45" ry="2.3" transform="rotate(-18 -14 -66)" />
+              <ellipse cx="14" cy="-69" rx="1.45" ry="2.3" transform="rotate(18 14 -69)" />
+              <ellipse cx="-5" cy="-78" rx="1.15" ry="1.95" transform="rotate(-8 -5 -78)" />
+              <ellipse cx="5" cy="-80" rx="1.15" ry="1.95" transform="rotate(8 5 -80)" />
+              <ellipse cx="-18" cy="-88" rx="1.25" ry="2.0" transform="rotate(-20 -18 -88)" />
+              <ellipse cx="18" cy="-90" rx="1.25" ry="2.0" transform="rotate(20 18 -90)" />
+              <circle cx="-9" cy="-97" r="1.1" />
+              <circle cx="9" cy="-99" r="1.1" />
+              <circle cx="-2" cy="-108" r="0.92" opacity="0.72" />
+              <circle cx="4" cy="-112" r="0.88" opacity="0.65" />
+              <circle cx="-14" cy="-106" r="0.88" opacity="0.65" />
+              <circle cx="14" cy="-109" r="0.88" opacity="0.65" />
+            </g>
+          </g>
+
+          <!-- Reusable 6 Curved Filaments & Amber Anthers (centered at 0,0) -->
+          <g id="stamensArt">
+            <!-- Stamen 1 (Upper-Left) -->
+            <path d="M -3 -3 C -17 -35, -40 -69, -64 -84"
+                  stroke="url(#filamentGrad)" stroke-width="2.0" stroke-linecap="round" fill="none" />
+            <g transform="translate(-67, -86) rotate(-32)" filter="url(#antherGlow)">
+              <ellipse cx="0" cy="0" rx="12.5" ry="4.3" fill="url(#antherGrad)" />
+              <path d="M -8.5 -1 C -3 -2.3, 4 -2.3, 8.5 -0.5" stroke="#ffd27d" stroke-width="1.05" stroke-linecap="round" opacity="0.78" />
+            </g>
+
+            <!-- Stamen 2 (Upper-Center-Left) -->
+            <path d="M -1 -4 C -6 -46, -13 -90, -23 -116"
+                  stroke="url(#filamentGrad)" stroke-width="2.0" stroke-linecap="round" fill="none" />
+            <g transform="translate(-24, -119) rotate(14)" filter="url(#antherGlow)">
+              <ellipse cx="0" cy="0" rx="13" ry="4.4" fill="url(#antherGrad)" />
+              <path d="M -8.5 -1 C -3 -2.3, 4 -2.3, 8.5 -0.5" stroke="#ffd27d" stroke-width="1.05" stroke-linecap="round" opacity="0.78" />
+            </g>
+
+            <!-- Stamen 3 (Upper-Right) -->
+            <path d="M 3 -3 C 19 -39, 42 -75, 64 -92"
+                  stroke="url(#filamentGrad)" stroke-width="2.0" stroke-linecap="round" fill="none" />
+            <g transform="translate(67, -94) rotate(36)" filter="url(#antherGlow)">
+              <ellipse cx="0" cy="0" rx="13" ry="4.4" fill="url(#antherGrad)" />
+              <path d="M -8.5 -1 C -3 -2.3, 4 -2.3, 8.5 -0.5" stroke="#ffd27d" stroke-width="1.05" stroke-linecap="round" opacity="0.8" />
+            </g>
+
+            <!-- Stamen 4 (Mid-Right) -->
+            <path d="M 4 1 C 36 -10, 70 -21, 91 -17"
+                  stroke="url(#filamentGrad)" stroke-width="1.95" stroke-linecap="round" fill="none" />
+            <g transform="translate(94, -16) rotate(72)" filter="url(#antherGlow)">
+              <ellipse cx="0" cy="0" rx="12" ry="4.2" fill="url(#antherGrad)" />
+              <path d="M -8 -1 C -2 -2.1, 4 -2.1, 8 -0.5" stroke="#ffd27d" stroke-width="1.0" stroke-linecap="round" opacity="0.75" />
+            </g>
+
+            <!-- Stamen 5 (Lower-Right) -->
+            <path d="M 2 4 C 23 28, 40 54, 46 77"
+                  stroke="url(#filamentGrad)" stroke-width="1.95" stroke-linecap="round" fill="none" />
+            <g transform="translate(47, 80) rotate(-42)" filter="url(#antherGlow)">
+              <ellipse cx="0" cy="0" rx="12.5" ry="4.2" fill="url(#antherGrad)" />
+              <path d="M -8 -1 C -2 -2.1, 4 -2.1, 8 -0.5" stroke="#ffd27d" stroke-width="1.0" stroke-linecap="round" opacity="0.74" />
+            </g>
+
+            <!-- Stamen 6 (Lower-Left) -->
+            <path d="M -3 3 C -26 22, -53 41, -72 58"
+                  stroke="url(#filamentGrad)" stroke-width="1.95" stroke-linecap="round" fill="none" />
+            <g transform="translate(-75, 61) rotate(48)" filter="url(#antherGlow)">
+              <ellipse cx="0" cy="0" rx="12.5" ry="4.3" fill="url(#antherGrad)" />
+              <path d="M -8 -1 C -2 -2.1, 4 -2.1, 8 -0.5" stroke="#ffd27d" stroke-width="1.0" stroke-linecap="round" opacity="0.74" />
+            </g>
+          </g>
+
+          <!-- Reusable Central Pistil & Three-Lobed Velvety Stigma -->
+          <g id="pistilArt">
+            <path d="M 0 0 C 4 -22, 13 -50, 18 -77"
+                  stroke="url(#pistilGrad)" stroke-width="3.4" stroke-linecap="round" fill="none" />
+            <g transform="translate(19, -81) rotate(12)">
+              <circle cx="-3.6" cy="1.7" r="4.4" fill="url(#stigmaGrad)" />
+              <circle cx="3.6" cy="1.7" r="4.4" fill="url(#stigmaGrad)" />
+              <circle cx="0" cy="-3.0" r="4.6" fill="url(#stigmaGrad)" />
+              <circle cx="-1" cy="-4.0" r="1.4" fill="#ffffff" opacity="0.58" />
+            </g>
+          </g>
+        </defs>
+
+        <!-- ====================================================================
+             COMPANION LILY 1 (LEFT — Delicately Angled, Slightly Smaller)
+             ==================================================================== -->
+        <g class="lily-unit sway-left" data-lily="left">
+          <!-- Curved Left Stem & Lance-Shaped Leaves -->
+          <g class="stem-unit">
+            <g class="leaf-unit" style="transform-origin: 274px 534px;">
+              <path d="M 276 540 C 224 516, 158 492, 102 462 C 154 468, 224 494, 278 524 Z"
+                    fill="url(#leafGradLeft)" />
+              <path d="M 274 532 C 224 508, 166 484, 114 466"
+                    stroke="rgba(162, 208, 164, 0.34)" stroke-width="1.0" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="leaf-unit" style="transform-origin: 330px 632px;">
+              <path d="M 332 634 C 282 618, 228 610, 182 618 C 224 634, 282 646, 334 646 Z"
+                    fill="url(#leafGradFade)" />
+            </g>
+            <path d="M 208 362 C 242 462, 314 584, 376 740"
+                  stroke="url(#stemGradSide)" stroke-width="8.5" stroke-linecap="round" fill="none" />
+            <path d="M 206 368 C 240 462, 310 584, 372 720"
+                  stroke="url(#stemHighlight)" stroke-width="2.0" stroke-linecap="round" fill="none" />
+          </g>
+
+          <!-- Left Lily Blossom Head -->
+          <g class="lily-interactive" role="button" tabindex="0"
+             aria-label="Left Lilium blossom. Tap to gently ripple petals and release pollen."
+             transform="translate(202, 344) rotate(-22) scale(0.74)">
+            <g class="lily-head">
+              <!-- Outer Sepals -->
+              <g class="petal-breathe-outer">
+                <g class="petal petal-outer-1" filter="url(#petalShadow)"><g transform="rotate(-6)"><use href="#outerPetalShape" /></g></g>
+                <g class="petal petal-outer-2" filter="url(#petalShadow)"><g transform="rotate(114)"><use href="#outerPetalShape" /></g></g>
+                <g class="petal petal-outer-3" filter="url(#petalShadow)"><g transform="rotate(234)"><use href="#outerPetalShape" /></g></g>
+              </g>
+              <!-- Inner Broad Petals -->
+              <g class="petal-breathe-inner">
+                <g class="petal petal-inner-1" filter="url(#petalShadow)"><g transform="rotate(54)"><use href="#innerPetalShape" /></g></g>
+                <g class="petal petal-inner-2" filter="url(#petalShadow)"><g transform="rotate(174)"><use href="#innerPetalShape" /></g></g>
+                <g class="petal petal-inner-3" filter="url(#petalShadow)">
+                  <g transform="rotate(294)">
+                    <use href="#innerPetalShape" />
+                    <ellipse cx="-22" cy="-140" rx="2.8" ry="3.8" transform="rotate(-14 -22 -140)"
+                             fill="rgba(255,255,255,0.48)" stroke="rgba(210,232,226,0.45)" stroke-width="0.5" />
+                    <circle cx="-22.8" cy="-141.2" r="0.9" fill="#ffffff" opacity="0.88" />
+                  </g>
+                </g>
+              </g>
+              <!-- Glowing Throat Center -->
+              <g class="throat-glow lily-center-marker">
+                <circle cx="0" cy="0" r="54" fill="url(#throatRadial)" filter="url(#softGlowFilter)" />
+                <circle cx="0" cy="0" r="15" fill="#e8f5b8" opacity="0.65" />
+              </g>
+              <!-- Curved Stamens & Pistil -->
+              <g class="stamens-group"><g class="stamen-tremor"><use href="#stamensArt" /></g></g>
+              <g class="pistil-group"><use href="#pistilArt" /></g>
+            </g>
+          </g>
+        </g>
+
+        <!-- ====================================================================
+             COMPANION LILY 2 (RIGHT — Gracefully Angled, Varied Height)
+             ==================================================================== -->
+        <g class="lily-unit sway-right" data-lily="right">
+          <!-- Curved Right Stem & Lance-Shaped Leaves -->
+          <g class="stem-unit">
+            <g class="leaf-unit" style="transform-origin: 518px 516px;">
+              <path d="M 516 522 C 566 494, 634 468, 692 436 C 640 448, 572 478, 514 508 Z"
+                    fill="url(#leafGradRight)" />
+              <path d="M 518 514 C 568 486, 628 458, 680 440"
+                    stroke="rgba(166, 212, 168, 0.34)" stroke-width="1.0" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="leaf-unit" style="transform-origin: 472px 622px;">
+              <path d="M 470 624 C 520 604, 576 592, 622 598 C 580 618, 522 634, 470 638 Z"
+                    fill="url(#leafGradFade)" />
+            </g>
+            <path d="M 588 336 C 556 442, 488 576, 424 740"
+                  stroke="url(#stemGradSide)" stroke-width="8.8" stroke-linecap="round" fill="none" />
+            <path d="M 585.5 342 C 554 442, 486 576, 422 720"
+                  stroke="url(#stemHighlight)" stroke-width="2.0" stroke-linecap="round" fill="none" />
+          </g>
+
+          <!-- Right Lily Blossom Head -->
+          <g class="lily-interactive" role="button" tabindex="0"
+             aria-label="Right Lilium blossom. Tap to gently ripple petals and release pollen."
+             transform="translate(596, 316) rotate(21) scale(0.78)">
+            <g class="lily-head">
+              <!-- Outer Sepals -->
+              <g class="petal-breathe-outer">
+                <g class="petal petal-outer-1" filter="url(#petalShadow)"><g transform="rotate(4)"><use href="#outerPetalShape" /></g></g>
+                <g class="petal petal-outer-2" filter="url(#petalShadow)"><g transform="rotate(124)"><use href="#outerPetalShape" /></g></g>
+                <g class="petal petal-outer-3" filter="url(#petalShadow)"><g transform="rotate(244)"><use href="#outerPetalShape" /></g></g>
+              </g>
+              <!-- Inner Broad Petals -->
+              <g class="petal-breathe-inner">
+                <g class="petal petal-inner-1" filter="url(#petalShadow)">
+                  <g transform="rotate(64)">
+                    <use href="#innerPetalShape" />
+                    <ellipse cx="20" cy="-152" rx="2.9" ry="4.0" transform="rotate(18 20 -152)"
+                             fill="rgba(255,255,255,0.5)" stroke="rgba(210,232,226,0.48)" stroke-width="0.5" />
+                    <circle cx="19" cy="-153.5" r="0.95" fill="#ffffff" opacity="0.9" />
+                  </g>
+                </g>
+                <g class="petal petal-inner-2" filter="url(#petalShadow)"><g transform="rotate(184)"><use href="#innerPetalShape" /></g></g>
+                <g class="petal petal-inner-3" filter="url(#petalShadow)"><g transform="rotate(304)"><use href="#innerPetalShape" /></g></g>
+              </g>
+              <!-- Glowing Throat Center -->
+              <g class="throat-glow lily-center-marker">
+                <circle cx="0" cy="0" r="54" fill="url(#throatRadial)" filter="url(#softGlowFilter)" />
+                <circle cx="0" cy="0" r="15" fill="#e8f5b8" opacity="0.65" />
+              </g>
+              <!-- Curved Stamens & Pistil -->
+              <g class="stamens-group"><g class="stamen-tremor"><use href="#stamensArt" /></g></g>
+              <g class="pistil-group"><use href="#pistilArt" /></g>
+            </g>
+          </g>
+        </g>
+
+        <!-- ====================================================================
+             CENTRAL HERO LILY (TALLEST — Foreground Focal Point)
+             ==================================================================== -->
+        <g class="lily-unit sway-center" data-lily="center">
+          <!-- Main Central Stem & Arching Lance-Shaped Leaves -->
+          <g class="stem-unit">
+            <!-- Left Foreground Arching Leaf -->
+            <g class="leaf-unit" style="transform-origin: 398px 548px;">
+              <path d="M 397 554 C 350 526, 286 498, 228 456 C 278 468, 348 494, 399 536 Z"
+                    fill="url(#leafGradLeft)" />
+              <path d="M 396 544 C 348 516, 294 486, 238 460"
+                    stroke="rgba(164, 210, 166, 0.36)" stroke-width="1.1" fill="none" stroke-linecap="round" />
+            </g>
+            <!-- Right Foreground Arching Leaf -->
+            <g class="leaf-unit" style="transform-origin: 403px 496px;">
+              <path d="M 403 504 C 452 472, 514 440, 574 410 C 526 432, 462 472, 403 522 Z"
+                    fill="url(#leafGradRight)" />
+              <path d="M 405 510 C 454 476, 508 444, 560 416"
+                    stroke="rgba(170, 216, 172, 0.36)" stroke-width="1.1" fill="none" stroke-linecap="round" />
+            </g>
+            <!-- Hero Stem -->
+            <path d="M 400 264 C 404 388, 408 542, 398 740"
+                  stroke="url(#stemGradCenter)" stroke-width="10.5" stroke-linecap="round" fill="none" />
+            <path d="M 397.5 272 C 401.5 388, 405 542, 395.5 720"
+                  stroke="url(#stemHighlight)" stroke-width="2.4" stroke-linecap="round" fill="none" />
+          </g>
+
+          <!-- Central Hero Blossom Head -->
+          <g class="lily-interactive" role="button" tabindex="0"
+             aria-label="Center Lilium blossom. Tap to gently ripple petals and release pollen."
+             transform="translate(400, 246) rotate(-2) scale(0.95)">
+            <g class="lily-head">
+              <!-- Outer Sepals -->
+              <g class="petal-breathe-outer">
+                <g class="petal petal-outer-1" filter="url(#petalShadow)"><g transform="rotate(-4)"><use href="#outerPetalShape" /></g></g>
+                <g class="petal petal-outer-2" filter="url(#petalShadow)"><g transform="rotate(116)"><use href="#outerPetalShape" /></g></g>
+                <g class="petal petal-outer-3" filter="url(#petalShadow)"><g transform="rotate(237)"><use href="#outerPetalShape" /></g></g>
+              </g>
+              <!-- Inner Broad Petals -->
+              <g class="petal-breathe-inner">
+                <g class="petal petal-inner-1" filter="url(#petalShadow)">
+                  <g transform="rotate(56)">
+                    <use href="#innerPetalShape" />
+                    <!-- Translucent Dewdrop -->
+                    <ellipse cx="22" cy="-152" rx="3.1" ry="4.3" transform="rotate(18 22 -152)"
+                             fill="rgba(255,255,255,0.52)" stroke="rgba(210,232,226,0.5)" stroke-width="0.6" />
+                    <circle cx="21" cy="-153.5" r="1.05" fill="#ffffff" opacity="0.92" />
+                  </g>
+                </g>
+                <g class="petal petal-inner-2" filter="url(#petalShadow)"><g transform="rotate(176)"><use href="#innerPetalShape" /></g></g>
+                <g class="petal petal-inner-3" filter="url(#petalShadow)">
+                  <g transform="rotate(296)">
+                    <use href="#innerPetalShape" />
+                    <!-- Translucent Dewdrop -->
+                    <ellipse cx="-24" cy="-138" rx="2.5" ry="3.4" transform="rotate(-14 -24 -138)"
+                             fill="rgba(255,255,255,0.48)" stroke="rgba(210,232,226,0.45)" stroke-width="0.5" />
+                    <circle cx="-24.8" cy="-139.2" r="0.85" fill="#ffffff" opacity="0.88" />
+                  </g>
+                </g>
+              </g>
+              <!-- Glowing Pale-Green Throat Center -->
+              <g class="throat-glow lily-center-marker">
+                <circle cx="0" cy="0" r="56" fill="url(#throatRadial)" filter="url(#softGlowFilter)" />
+                <circle cx="0" cy="0" r="16" fill="#e8f5b8" opacity="0.68" />
+              </g>
+              <!-- Curved Stamens & Pistil -->
+              <g class="stamens-group"><g class="stamen-tremor"><use href="#stamensArt" /></g></g>
+              <g class="pistil-group"><use href="#pistilArt" /></g>
+            </g>
+          </g>
+        </g>
+
+      </svg>
+    </div>
+  </main>
+
+  <!-- Subtle Interactive Hint (Fades softly after first tap or delay) -->
+  <div id="interactionHint"
+       class="hint-fade fixed bottom-[6.2rem] sm:bottom-[5.2rem] inset-x-0 z-10 flex justify-center pointer-events-none px-4">
+    <span class="text-[10px] sm:text-[11px] tracking-[0.22em] uppercase font-light"
+          style="color: var(--text-muted);">
+      Tap any lily to ripple &amp; release pollen
+    </span>
+  </div>
+
+  <!-- Compact Frosted-Glass Bottom Control Bar -->
+  <nav aria-label="Flower colors, lighting moods, and bloom controls"
+       class="fixed bottom-4 sm:bottom-6 inset-x-0 z-20 flex justify-center px-3 fade-in-bottom">
+    <div class="glass-dock rounded-3xl sm:rounded-full px-3 py-2 sm:px-3.5 sm:py-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-2.5 max-w-full">
+
+      <!-- Flower Color Palette Swatches -->
+      <div class="flex items-center gap-2 sm:gap-2.5 px-1" role="group" aria-label="Lily flower colors">
+        <!-- 1. Casablanca (Ivory White & Pearl) -->
+        <button type="button" data-set-palette="casablanca" aria-pressed="true"
+                title="Casablanca — Ivory White"
+                aria-label="Casablanca Ivory White"
+                class="color-swatch"
+                style="background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f3efe8 62%, #d8dfd9 100%); --swatch-glow: rgba(255,252,244,0.65);">
+        </button>
+
+        <!-- 2. Stargazer (Soft Blush & Rose Pink) -->
+        <button type="button" data-set-palette="stargazer" aria-pressed="false"
+                title="Stargazer — Rose Blush"
+                aria-label="Stargazer Soft Blush and Rose Pink"
+                class="color-swatch"
+                style="background: radial-gradient(circle at 35% 30%, #ffe6ef 0%, #f19ab6 58%, #cc567d 100%); --swatch-glow: rgba(244,143,177,0.75);">
+        </button>
+
+        <!-- 3. Golden Sun (Warm Buttercream & Golden Apricot) -->
+        <button type="button" data-set-palette="goldenSun" aria-pressed="false"
+                title="Golden Sun — Warm Buttercream"
+                aria-label="Golden Sun Warm Buttercream and Golden Apricot"
+                class="color-swatch"
+                style="background: radial-gradient(circle at 35% 30%, #fff7d6 0%, #f8cf6a 58%, #dc9234 100%); --swatch-glow: rgba(249,206,102,0.75);">
+        </button>
+
+        <!-- 4. Lavender Mist (Soft Lilac & Violet) -->
+        <button type="button" data-set-palette="lavender" aria-pressed="false"
+                title="Lavender Mist — Soft Lilac"
+                aria-label="Lavender Mist Soft Lilac and Violet"
+                class="color-swatch"
+                style="background: radial-gradient(circle at 35% 30%, #f4edff 0%, #c8aef0 58%, #8f6bc8 100%); --swatch-glow: rgba(202,174,242,0.75);">
+        </button>
+
+        <!-- 5. Crimson Velvet (Deep Romantic Rose-Red) -->
+        <button type="button" data-set-palette="crimson" aria-pressed="false"
+                title="Crimson Velvet — Romantic Rose-Red"
+                aria-label="Crimson Velvet Deep Romantic Rose-Red"
+                class="color-swatch"
+                style="background: radial-gradient(circle at 35% 30%, #ff9eb0 0%, #cf3654 55%, #7e162c 100%); --swatch-glow: rgba(224,66,98,0.8);">
+        </button>
+
+        <!-- Custom Color Swatch / Picker -->
+        <label id="customSwatchLabel" class="custom-swatch-label" title="Custom Flower Color" aria-label="Choose custom flower color">
+          <span id="customSwatchInner" class="custom-swatch-inner"></span>
+          <input type="color" id="customColorInput" value="#f0a8c8"
+                 class="sr-only" aria-label="Pick custom lily petal color" />
+        </label>
+      </div>
+
+      <!-- Subtle Divider -->
+      <div class="w-4/5 h-px sm:w-px sm:h-4" style="background: var(--pill-border);"></div>
+
+      <!-- Lighting Moods & Replay Bloom -->
+      <div class="flex items-center gap-1 sm:gap-1.5" role="group" aria-label="Lighting moods and bloom replay">
+        <button type="button" data-set-mood="midnight" aria-pressed="true"
+                class="mood-btn rounded-full px-2.5 py-1.5 text-[11px] font-light tracking-wide flex items-center gap-1.5 cursor-pointer">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-300/85 shadow-[0_0_7px_rgba(110,231,183,0.75)]"></span>
+          <span>Midnight</span>
+        </button>
+
+        <button type="button" data-set-mood="dawn" aria-pressed="false"
+                class="mood-btn rounded-full px-2.5 py-1.5 text-[11px] font-light tracking-wide flex items-center gap-1.5 cursor-pointer">
+          <span class="w-1.5 h-1.5 rounded-full bg-rose-300/85 shadow-[0_0_7px_rgba(253,164,175,0.75)]"></span>
+          <span>Dawn Mist</span>
+        </button>
+
+        <button type="button" data-set-mood="golden" aria-pressed="false"
+                class="mood-btn rounded-full px-2.5 py-1.5 text-[11px] font-light tracking-wide flex items-center gap-1.5 cursor-pointer">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-300/90 shadow-[0_0_7px_rgba(252,211,77,0.8)]"></span>
+          <span>Golden Hour</span>
+        </button>
+
+        <div class="w-px h-3.5 mx-0.5" style="background: var(--pill-border);"></div>
+
+        <!-- Replay Bloom Button -->
+        <button type="button" id="replayBloomBtn" title="Replay blooming animation"
+                aria-label="Replay bloom animation"
+                class="mood-btn rounded-full px-2.5 py-1.5 text-[11px] font-light tracking-wide flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-3.5 h-3.5 opacity-85" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <span class="hidden md:inline">Replay</span>
+        </button>
+      </div>
+
+    </div>
+  </nav>
+
+  <script>
+    /**
+     * Lilium 3-Lily Botanical Art Interactive Engine
+     * Handles:
+     * 1. Curated Botanical Color Palettes + Custom Color Picker with 60fps SVG Gradient Interpolation
+     * 2. Staggered 3-Lily Bloom Choreography & Replay
+     * 3. Atmospheric Lighting Moods
+     * 4. Smooth Mouse / Touch 3D Parallax Tilt
+     * 5. Individual Lily Click/Tap Ripple & Localized Golden Pollen Burst
+     * 6. HTML5 Canvas Ambient Firefly & Pollen Particle System
+     */
+    (function () {
+      'use strict';
+
+      /* ======================================================================
+         DOM REFERENCES
+         ====================================================================== */
+      const rootHtml = document.documentElement;
+      const bouquetSvg = document.getElementById('bouquetSvg');
+      const bouquetParallax = document.getElementById('bouquetParallax');
+      const ambientHalo = document.getElementById('ambientHalo');
+      const paletteSubtitle = document.getElementById('paletteSubtitle');
+      const replayBloomBtn = document.getElementById('replayBloomBtn');
+      const moodButtons = document.querySelectorAll('[data-set-mood]');
+      const paletteButtons = document.querySelectorAll('[data-set-palette]');
+      const customColorInput = document.getElementById('customColorInput');
+      const customSwatchLabel = document.getElementById('customSwatchLabel');
+      const customSwatchInner = document.getElementById('customSwatchInner');
+      const lilyUnits = document.querySelectorAll('.lily-unit');
+      const interactionHint = document.getElementById('interactionHint');
+      const canvas = document.getElementById('pollenCanvas');
+      const ctx = canvas.getContext('2d');
+
+      // SVG Gradient Stop References for Silky Cross-Browser Color Morphing
+      const outerStops = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById('outerStop' + i));
+      const innerStops = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById('innerStop' + i));
+      const midribStops = [0, 1, 2, 3].map((i) => document.getElementById('midribStop' + i));
+
+      let currentMood = 'midnight';
+      let hintDismissed = false;
+
+      /* ======================================================================
+         1. CURATED BOTANICAL COLOR PALETTES & SMOOTH COLOR MORPHING
+         ====================================================================== */
+      const FLOWER_PALETTES = {
+        casablanca: {
+          name: 'Casablanca',
+          outer: ['#c9de96', '#e5edd1', '#f7e9ec', '#f5f3f0', '#e8ece9', '#d5ddd9'],
+          inner: ['#d6ea9b', '#f1f5d7', '#fae6ea', '#ffffff', '#f7f7f5', '#e9eeec'],
+          midrib: ['#b8d977', '#f0c8d0', '#ffffff', '#ffffff'],
+          freckle: '#c75e77',
+          vein: 'rgba(182, 152, 162, 0.18)',
+          blush: 'rgba(232, 148, 168, 0.14)',
+          stroke: 'rgba(255, 255, 255, 0.62)',
+          tipShade: 'rgba(196, 208, 204, 0.30)',
+          glow: [246, 242, 228, 0.18],
+          pollenTint: 'rgba(255, 232, 156, '
+        },
+        stargazer: {
+          name: 'Stargazer',
+          outer: ['#cadc94', '#ebb9c6', '#e683a4', '#ec9db7', '#f6c8d8', '#fbe8ef'],
+          inner: ['#d4e89c', '#f3c3d0', '#de638d', '#f192b2', '#f9cedd', '#fff2f6'],
+          midrib: ['#bcd97c', '#e66e97', '#ffd6e5', '#ffffff'],
+          freckle: '#961e4b',
+          vein: 'rgba(164, 48, 92, 0.22)',
+          blush: 'rgba(218, 66, 118, 0.20)',
+          stroke: 'rgba(255, 238, 245, 0.68)',
+          tipShade: 'rgba(214, 130, 158, 0.28)',
+          glow: [246, 156, 188, 0.22],
+          pollenTint: 'rgba(255, 210, 178, '
+        },
+        goldenSun: {
+          name: 'Golden Sun',
+          outer: ['#c7dc8a', '#e8e2a0', '#f5cb78', '#f8d88a', '#fae7b4', '#f4d99b'],
+          inner: ['#d5ea94', '#f3eea8', '#f7c564', '#fce094', '#fff0c4', '#faebc0'],
+          midrib: ['#b8d670', '#f0a642', '#fff4cc', '#ffffff'],
+          freckle: '#b85a1c',
+          vein: 'rgba(186, 112, 36, 0.20)',
+          blush: 'rgba(244, 158, 62, 0.18)',
+          stroke: 'rgba(255, 248, 218, 0.66)',
+          tipShade: 'rgba(218, 162, 74, 0.26)',
+          glow: [255, 212, 124, 0.24],
+          pollenTint: 'rgba(255, 224, 118, '
+        },
+        lavender: {
+          name: 'Lavender Mist',
+          outer: ['#c6dc98', '#ded9ea', '#c2a6e6', '#d3bef2', '#e4d8fa', '#efe8fc'],
+          inner: ['#d4e8a2', '#eae4f6', '#b894e4', '#d5c0f5', '#ebe1fc', '#f7f2ff'],
+          midrib: ['#b8d684', '#b48ce0', '#f0e6ff', '#ffffff'],
+          freckle: '#6a3fa0',
+          vein: 'rgba(116, 78, 168, 0.20)',
+          blush: 'rgba(156, 112, 218, 0.18)',
+          stroke: 'rgba(244, 236, 255, 0.66)',
+          tipShade: 'rgba(154, 126, 202, 0.28)',
+          glow: [204, 174, 246, 0.22],
+          pollenTint: 'rgba(242, 222, 255, '
+        },
+        crimson: {
+          name: 'Crimson Velvet',
+          outer: ['#a8be78', '#b85060', '#961e36', '#b82a46', '#d44864', '#e8889a'],
+          inner: ['#bcd084', '#cc5668', '#a81e3a', '#ce3252', '#e25874', '#f4a8b8'],
+          midrib: ['#b4cc7a', '#d94866', '#ffb4c4', '#ffe4ea'],
+          freckle: '#59081b',
+          vein: 'rgba(92, 12, 30, 0.26)',
+          blush: 'rgba(158, 18, 48, 0.24)',
+          stroke: 'rgba(255, 204, 214, 0.50)',
+          tipShade: 'rgba(112, 16, 36, 0.34)',
+          glow: [228, 76, 108, 0.24],
+          pollenTint: 'rgba(255, 202, 146, '
+        }
+      };
+
+      // Color Parsing & Conversion Utilities
+      function hexToRgb(hex) {
+        const clean = hex.replace('#', '');
+        const full = clean.length === 3
+          ? clean.split('').map((c) => c + c).join('')
+          : clean;
+        const num = parseInt(full, 16);
+        return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+      }
+
+      function rgbToHex(r, g, b) {
+        const clamp = (v) => Math.max(0, Math.min(255, Math.round(v)));
+        return '#' + [clamp(r), clamp(g), clamp(b)]
+          .map((v) => v.toString(16).padStart(2, '0'))
+          .join('');
+      }
+
+      function rgbToHsl(r, g, b) {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h = 0, s = 0, l = (max + min) / 2;
+        if (max !== min) {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+          }
+          h /= 6;
+        }
+        return [h * 360, s * 100, l * 100];
+      }
+
+      function hslToHex(h, s, l) {
+        h = ((h % 360) + 360) % 360;
+        s = Math.max(0, Math.min(100, s)) / 100;
+        l = Math.max(0, Math.min(100, l)) / 100;
+        const k = (n) => (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+        return rgbToHex(f(0) * 255, f(8) * 255, f(4) * 255);
+      }
+
+      // Generate a harmonious botanical lily palette from any chosen custom hex color
+      function buildCustomPalette(hex) {
+        const [r, g, b] = hexToRgb(hex);
+        const [h, s, l] = rgbToHsl(r, g, b);
+        const sat = Math.max(24, Math.min(82, s));
+        const baseL = Math.max(36, Math.min(76, l));
+
+        return {
+          name: 'Custom Bloom',
+          outer: [
+            '#c4da92',
+            hslToHex(h, sat * 0.48, Math.min(86, baseL + 16)),
+            hslToHex(h, sat * 0.88, Math.max(32, baseL - 6)),
+            hslToHex(h, sat * 0.82, Math.min(82, baseL + 4)),
+            hslToHex(h, sat * 0.65, Math.min(90, baseL + 16)),
+            hslToHex(h, sat * 0.45, Math.min(95, baseL + 24))
+          ],
+          inner: [
+            '#d2e79a',
+            hslToHex(h, sat * 0.52, Math.min(90, baseL + 20)),
+            hslToHex(h, sat * 0.94, Math.max(36, baseL - 2)),
+            hslToHex(h, sat * 0.86, Math.min(86, baseL + 8)),
+            hslToHex(h, sat * 0.64, Math.min(93, baseL + 19)),
+            hslToHex(h, sat * 0.40, Math.min(97, baseL + 27))
+          ],
+          midrib: [
+            '#b8d87a',
+            hslToHex(h, sat * 0.85, Math.min(78, baseL + 4)),
+            hslToHex(h, sat * 0.45, Math.min(94, baseL + 24)),
+            '#ffffff'
+          ],
+          freckle: hslToHex(h, Math.min(90, sat + 12), Math.max(18, baseL - 28)),
+          vein: `hsla(${Math.round(h)}, ${Math.round(sat * 0.7)}%, ${Math.round(Math.max(22, baseL - 26))}%, 0.22)`,
+          blush: `hsla(${Math.round(h)}, ${Math.round(sat * 0.85)}%, ${Math.round(Math.max(34, baseL - 8))}%, 0.19)`,
+          stroke: 'rgba(255, 252, 255, 0.62)',
+          tipShade: `hsla(${Math.round(h)}, ${Math.round(sat * 0.6)}%, ${Math.round(Math.max(26, baseL - 18))}%, 0.28)`,
+          glow: [r, g, b, 0.22],
+          pollenTint: 'rgba(255, 228, 168, '
+        };
+      }
+
+      // Active Palette State & Smooth Animation Tween
+      let activePalette = FLOWER_PALETTES.casablanca;
+      let colorAnimFrame = null;
+
+      function applyPaletteSnapshot(outerArr, innerArr, midribArr, freckleHex, glowRgba) {
+        outerArr.forEach((hex, i) => outerStops[i].setAttribute('stop-color', hex));
+        innerArr.forEach((hex, i) => innerStops[i].setAttribute('stop-color', hex));
+        midribArr.forEach((hex, i) => midribStops[i].setAttribute('stop-color', hex));
+        rootHtml.style.setProperty('--petal-freckle', freckleHex);
+        rootHtml.style.setProperty(
+          '--glow-flower',
+          `rgba(${Math.round(glowRgba[0])}, ${Math.round(glowRgba[1])}, ${Math.round(glowRgba[2])}, ${glowRgba[3].toFixed(3)})`
+        );
+      }
+
+      function transitionToPalette(targetPalette) {
+        if (colorAnimFrame) cancelAnimationFrame(colorAnimFrame);
+
+        const startOuter = outerStops.map((s) => hexToRgb(s.getAttribute('stop-color')));
+        const startInner = innerStops.map((s) => hexToRgb(s.getAttribute('stop-color')));
+        const startMidrib = midribStops.map((s) => hexToRgb(s.getAttribute('stop-color')));
+        const startFreckle = hexToRgb(activePalette.freckle);
+        const startGlow = [...activePalette.glow];
+
+        const endOuter = targetPalette.outer.map(hexToRgb);
+        const endInner = targetPalette.inner.map(hexToRgb);
+        const endMidrib = targetPalette.midrib.map(hexToRgb);
+        const endFreckle = hexToRgb(targetPalette.freckle);
+        const endGlow = [...targetPalette.glow];
+
+        // Update CSS accent properties immediately for veins, blush & edge sheen
+        rootHtml.style.setProperty('--petal-vein', targetPalette.vein);
+        rootHtml.style.setProperty('--petal-blush', targetPalette.blush);
+        rootHtml.style.setProperty('--petal-stroke', targetPalette.stroke);
+        rootHtml.style.setProperty('--petal-tip-shade', targetPalette.tipShade);
+
+        // Smoothly update botanical subtitle
+        if (paletteSubtitle) {
+          paletteSubtitle.style.opacity = '0';
+          setTimeout(() => {
+            paletteSubtitle.textContent = targetPalette.name;
+            paletteSubtitle.style.opacity = '1';
+          }, 220);
+        }
+
+        activePalette = targetPalette;
+
+        const duration = 760;
+        const startTime = performance.now();
+
+        function step(now) {
+          const rawT = Math.min((now - startTime) / duration, 1);
+          // Smooth cubic ease-in-out
+          const t = rawT < 0.5
+            ? 4 * rawT * rawT * rawT
+            : 1 - Math.pow(-2 * rawT + 2, 3) / 2;
+
+          const lerpArr = (a, b) => a.map((c, idx) =>
+            rgbToHex(
+              c[0] + (b[idx][0] - c[0]) * t,
+              c[1] + (b[idx][1] - c[1]) * t,
+              c[2] + (b[idx][2] - c[2]) * t
+            )
+          );
+
+          const curFreckle = rgbToHex(
+            startFreckle[0] + (endFreckle[0] - startFreckle[0]) * t,
+            startFreckle[1] + (endFreckle[1] - startFreckle[1]) * t,
+            startFreckle[2] + (endFreckle[2] - startFreckle[2]) * t
+          );
+
+          const curGlow = [
+            startGlow[0] + (endGlow[0] - startGlow[0]) * t,
+            startGlow[1] + (endGlow[1] - startGlow[1]) * t,
+            startGlow[2] + (endGlow[2] - startGlow[2]) * t,
+            startGlow[3] + (endGlow[3] - startGlow[3]) * t
+          ];
+
+          applyPaletteSnapshot(
+            lerpArr(startOuter, endOuter),
+            lerpArr(startInner, endInner),
+            lerpArr(startMidrib, endMidrib),
+            curFreckle,
+            curGlow
+          );
+
+          if (rawT < 1) {
+            colorAnimFrame = requestAnimationFrame(step);
+          } else {
+            colorAnimFrame = null;
+          }
+        }
+
+        colorAnimFrame = requestAnimationFrame(step);
+      }
+
+      // Bind Curated Swatch Buttons
+      paletteButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-set-palette');
+          if (!FLOWER_PALETTES[key]) return;
+
+          paletteButtons.forEach((b) => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+          customSwatchLabel.classList.remove('is-active');
+          transitionToPalette(FLOWER_PALETTES[key]);
+        });
+      });
+
+      // Bind Custom Color Picker
+      customColorInput.addEventListener('input', (e) => {
+        const hex = e.target.value;
+        paletteButtons.forEach((b) => b.setAttribute('aria-pressed', 'false'));
+        customSwatchLabel.classList.add('is-active');
+        customSwatchInner.style.background = hex;
+        transitionToPalette(buildCustomPalette(hex));
+      });
+
+      /* ======================================================================
+         2. STAGGERED 3-LILY BLOOM CHOREOGRAPHY
+         ====================================================================== */
+      function triggerBloom() {
+        bouquetSvg.classList.remove('bloomed');
+        void bouquetSvg.getBoundingClientRect();
+
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            bouquetSvg.classList.add('bloomed');
+          }, 90);
+        });
+      }
+
+      replayBloomBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        triggerBloom();
+      });
+
+      /* ======================================================================
+         3. LIGHTING MOOD SWITCHING
+         ====================================================================== */
+      const MOOD_PARTICLE_COLORS = {
+        midnight: [
+          'rgba(246, 232, 178, ',
+          'rgba(195, 240, 214, ',
+          'rgba(255, 248, 224, '
+        ],
+        dawn: [
+          'rgba(255, 216, 228, ',
+          'rgba(248, 230, 198, ',
+          'rgba(232, 214, 252, '
+        ],
+        golden: [
+          'rgba(255, 214, 122, ',
+          'rgba(255, 186, 102, ',
+          'rgba(255, 242, 206, '
+        ]
+      };
+
+      function setMood(mood) {
+        if (!MOOD_PARTICLE_COLORS[mood]) return;
+        currentMood = mood;
+        rootHtml.setAttribute('data-mood', mood);
+
+        moodButtons.forEach((btn) => {
+          const isMatch = btn.getAttribute('data-set-mood') === mood;
+          btn.setAttribute('aria-pressed', isMatch ? 'true' : 'false');
+        });
+
+        ambientMotes.forEach((mote) => {
+          mote.colorPrefix = pickRandomColor(currentMood);
+        });
+      }
+
+      moodButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          setMood(btn.getAttribute('data-set-mood'));
+        });
+      });
+
+      /* ======================================================================
+         4. SMOOTH MOUSE & TOUCH 3D PARALLAX TILT
+         ====================================================================== */
+      const parallax = { targetX: 0, targetY: 0, currentX: 0, currentY: 0 };
+
+      function updateParallaxTarget(clientX, clientY) {
+        const w = window.innerWidth || 1;
+        const h = window.innerHeight || 1;
+        parallax.targetX = (clientX / w - 0.5) * 2;
+        parallax.targetY = (clientY / h - 0.5) * 2;
+      }
+
+      window.addEventListener('mousemove', (e) => updateParallaxTarget(e.clientX, e.clientY), { passive: true });
+      window.addEventListener('mouseleave', () => { parallax.targetX = 0; parallax.targetY = 0; });
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches.length > 0) {
+          updateParallaxTarget(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+      window.addEventListener('touchend', () => { parallax.targetX = 0; parallax.targetY = 0; }, { passive: true });
+
+      /* ======================================================================
+         5. INDIVIDUAL LILY INTERACTION (RIPPLE + LOCALIZED POLLEN BURST)
+         ====================================================================== */
+      function dismissHint() {
+        if (!hintDismissed && interactionHint) {
+          hintDismissed = true;
+          interactionHint.classList.add('hint-hidden');
+        }
+      }
+
+      setTimeout(dismissHint, 7500);
+
+      function triggerIndividualLily(lilyUnit) {
+        dismissHint();
+
+        // 1. Staggered soft ripple across this specific lily's 6 petals
+        const petals = lilyUnit.querySelectorAll('.petal');
+        petals.forEach((petal, idx) => {
+          petal.classList.remove('petal-ripple');
+          void petal.getBoundingClientRect();
+          setTimeout(() => petal.classList.add('petal-ripple'), idx * 50);
+          setTimeout(() => petal.classList.remove('petal-ripple'), 1200 + idx * 50);
+        });
+
+        // 2. Stamen tremor ripple on this lily
+        const stamens = lilyUnit.querySelector('.stamen-tremor');
+        if (stamens) {
+          stamens.classList.remove('stamen-ripple');
+          void stamens.getBoundingClientRect();
+          stamens.classList.add('stamen-ripple');
+          setTimeout(() => stamens.classList.remove('stamen-ripple'), 1220);
+        }
+
+        // 3. Soft halo glow pulse
+        ambientHalo.classList.remove('pulse-burst');
+        void ambientHalo.offsetWidth;
+        ambientHalo.classList.add('pulse-burst');
+
+        // 4. Emit glowing pollen motes from this specific lily's throat center
+        const marker = lilyUnit.querySelector('.lily-center-marker');
+        if (marker) {
+          const rect = marker.getBoundingClientRect();
+          const cx = rect.left + rect.width * 0.5;
+          const cy = rect.top + rect.height * 0.5;
+          spawnPollenBurst(cx, cy, 30);
+        }
+      }
+
+      lilyUnits.forEach((unit) => {
+        const hitArea = unit.querySelector('.lily-interactive');
+        if (!hitArea) return;
+
+        hitArea.addEventListener('click', (e) => {
+          e.stopPropagation();
+          triggerIndividualLily(unit);
+        });
+
+        hitArea.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            triggerIndividualLily(unit);
+          }
+        });
+      });
+
+      /* ======================================================================
+         6. HTML5 CANVAS AMBIENT & INTERACTIVE POLLEN PARTICLE ENGINE
+         ====================================================================== */
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      const ambientMotes = [];
+      const burstPollen = [];
+
+      function pickRandomColor(mood) {
+        const list = MOOD_PARTICLE_COLORS[mood] || MOOD_PARTICLE_COLORS.midnight;
+        return list[Math.floor(Math.random() * list.length)];
+      }
+
+      function resizeCanvas() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function createAmbientMote(randomY = true) {
+        return {
+          x: Math.random() * width,
+          y: randomY ? Math.random() * height : height + 16,
+          radius: 0.9 + Math.random() * 2.1,
+          vx: (Math.random() - 0.5) * 0.22,
+          vy: -(0.12 + Math.random() * 0.34),
+          phase: Math.random() * Math.PI * 2,
+          phaseSpeed: 0.008 + Math.random() * 0.016,
+          baseAlpha: 0.16 + Math.random() * 0.44,
+          colorPrefix: pickRandomColor(currentMood)
+        };
+      }
+
+      function initAmbientMotes() {
+        ambientMotes.length = 0;
+        const count = Math.min(Math.max(Math.floor((width * height) / 24000), 26), 62);
+        for (let i = 0; i < count; i++) {
+          ambientMotes.push(createAmbientMote(true));
+        }
+      }
+
+      function spawnPollenBurst(x, y, count) {
+        const burstColors = [
+          'rgba(255, 224, 130, ',
+          'rgba(255, 192, 96, ',
+          activePalette.pollenTint || 'rgba(255, 246, 204, '
+        ];
+
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 0.6 + Math.random() * 2.3;
+          const spreadR = Math.random() * 22;
+          burstPollen.push({
+            x: x + Math.cos(angle) * spreadR,
+            y: y + Math.sin(angle) * spreadR,
+            vx: Math.cos(angle) * speed * 0.85,
+            vy: Math.sin(angle) * speed * 0.72 - (0.45 + Math.random() * 0.85),
+            radius: 1.05 + Math.random() * 2.2,
+            life: 1.0,
+            decay: 0.0065 + Math.random() * 0.009,
+            wobblePhase: Math.random() * Math.PI * 2,
+            colorPrefix: burstColors[Math.floor(Math.random() * burstColors.length)]
+          });
+        }
+      }
+
+      function drawGlowingMote(x, y, radius, colorPrefix, alpha) {
+        if (alpha <= 0.005) return;
+        const glowRadius = radius * 4.2;
+        const grad = ctx.createRadialGradient(x, y, 0, x, y, glowRadius);
+        grad.addColorStop(0, colorPrefix + Math.min(alpha * 1.15, 1).toFixed(3) + ')');
+        grad.addColorStop(0.35, colorPrefix + (alpha * 0.45).toFixed(3) + ')');
+        grad.addColorStop(1, colorPrefix + '0)');
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      /* ======================================================================
+         MAIN ANIMATION LOOP
+         ====================================================================== */
+      function animate(time) {
+        parallax.currentX += (parallax.targetX - parallax.currentX) * 0.055;
+        parallax.currentY += (parallax.targetY - parallax.currentY) * 0.055;
+
+        const rotY = parallax.currentX * 7.5;
+        const rotX = -parallax.currentY * 5.8;
+        const shiftX = parallax.currentX * 9;
+        const shiftY = parallax.currentY * 7;
+
+        bouquetParallax.style.transform =
+          `translate3d(${shiftX.toFixed(2)}px, ${shiftY.toFixed(2)}px, 0) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg)`;
+
+        ctx.clearRect(0, 0, width, height);
+
+        const breezeWave = Math.sin(time * 0.00055) * 0.18;
+
+        for (let i = 0; i < ambientMotes.length; i++) {
+          const m = ambientMotes[i];
+          m.phase += m.phaseSpeed;
+          m.x += m.vx + Math.sin(m.phase) * 0.22 + breezeWave;
+          m.y += m.vy;
+
+          if (m.y < -20) {
+            m.y = height + 18;
+            m.x = Math.random() * width;
+          }
+          if (m.x < -20) m.x = width + 18;
+          if (m.x > width + 20) m.x = -18;
+
+          const twinkle = 0.55 + 0.45 * Math.sin(m.phase * 1.4);
+          drawGlowingMote(m.x, m.y, m.radius, m.colorPrefix, m.baseAlpha * twinkle);
+        }
+
+        for (let i = burstPollen.length - 1; i >= 0; i--) {
+          const p = burstPollen[i];
+          p.wobblePhase += 0.06;
+          p.vx *= 0.982;
+          p.vy = p.vy * 0.982 - 0.012;
+          p.x += p.vx + Math.sin(p.wobblePhase) * 0.35 + breezeWave * 1.4;
+          p.y += p.vy;
+          p.life -= p.decay;
+
+          if (p.life <= 0) {
+            burstPollen.splice(i, 1);
+            continue;
+          }
+
+          const smoothAlpha = Math.sin(p.life * Math.PI * 0.5) * 0.88;
+          drawGlowingMote(p.x, p.y, p.radius * (0.65 + p.life * 0.45), p.colorPrefix, smoothAlpha);
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      /* ======================================================================
+         INITIALIZATION
+         ====================================================================== */
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        initAmbientMotes();
+      });
+
+      window.addEventListener('load', () => {
+        resizeCanvas();
+        initAmbientMotes();
+        triggerBloom();
+        requestAnimationFrame(animate);
+      });
+    })();
+  </script>
+</body>
+</html>
